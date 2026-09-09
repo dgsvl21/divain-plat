@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfumes Divain</title>
+    <!-- Tailwind CSS para um design moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- Cabeçalho -->
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Perfumes Divain</h1>
+            <p class="text-gray-600">Pesquisar por código, nome, marca ou género</p>
+        </header>
+
+        <!-- Barra de Pesquisa e Filtros -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Pesquisa por Texto -->
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pesquisar</label>
+                <input type="text" id="searchInput" placeholder="Ex: DIVAIN-830, Lattafa, Rose, YSL..."
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:outline-none">
+            </div>
+
+            <!-- Filtro por Género -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Género</label>
+                <select id="genderFilter"
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    <option value="">Todos</option>
+                    <option value="Woman">Mulher</option>
+                    <option value="Man">Homem</option>
+                    <option value="Unisex">Unisexo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Contador de Resultados -->
+        <div class="mb-4 text-sm text-gray-600 font-medium">
+            Total encontrado: <span id="counter" class="text-sky-600 font-bold">0</span> perfumes
+        </div>
+
+        <!-- Tabela de Resultados -->
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-sky-600 text-white">
+                        <th class="p-3">Código</th>
+                        <th class="p-3">Nome</th>
+                        <th class="p-3">Marca</th>
+                        <th class="p-3">Género</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-gray-200">
+                    <!-- Linhas inseridas via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lógica da Aplicação -->
+    <script>
+        let perfumesData = [];
+
+        // Retorna as classes de badge e o nome formatado de acordo com o género
+        function getGenderBadge(gender) {
+            switch (gender) {
+                case 'Woman':
+                    return '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-600">Mulher</span>';
+                case 'Man':
+                    return '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-600">Homem</span>';
+                case 'Unisex':
+                    return '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-sky-100 text-sky-600">Unisexo</span>';
+                default:
+                    return `<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">${gender || 'N/A'}</span>`;
+            }
+        }
+
+        // Carregar o ficheiro JSON
+        async function loadPerfumes() {
+            try {
+                const response = await fetch('perfumes.json');
+                perfumesData = await response.json();
+                renderTable(perfumesData);
+            } catch (error) {
+                console.error('Erro ao carregar o ficheiro JSON:', error);
+            }
+        }
+
+        // Renderizar a tabela
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const counter = document.getElementById('counter');
+
+            tbody.innerHTML = '';
+            counter.textContent = data.length;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Nenhum perfume encontrado.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = "hover:bg-gray-50 transition";
+                row.innerHTML = `
+          <td class="p-3 font-semibold text-sky-600">${item.divain}</td>
+          <td class="p-3 font-medium text-gray-800">${item.name}</td>
+          <td class="p-3 text-gray-600">${item.brand}</td>
+          <td class="p-3">
+            ${getGenderBadge(item.gender)}
+          </td>
+        `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filtrar dados em tempo real
+        function filterData() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const gender = document.getElementById('genderFilter').value;
+
+            const filtered = perfumesData.filter(item => {
+                const matchesSearch =
+                    item.divain.toLowerCase().includes(query) ||
+                    item.name.toLowerCase().includes(query) ||
+                    item.brand.toLowerCase().includes(query);
+
+                const matchesGender = gender === "" || item.gender === gender;
+
+                return matchesSearch && matchesGender;
+            });
+
+            renderTable(filtered);
+        }
+
+        // Event Listeners
+        document.getElementById('searchInput').addEventListener('input', filterData);
+        document.getElementById('genderFilter').addEventListener('change', filterData);
+
+        // Iniciar a aplicação
+        loadPerfumes();
+    </script>
+</body>
+
+</html>
